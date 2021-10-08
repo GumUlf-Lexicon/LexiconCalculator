@@ -1,13 +1,16 @@
 ﻿using System;
+using System.Collections;
+using System.Globalization;
 
 namespace LexiconCalculator
 {
-	class Program
+	public class Calculator
 	{
 
 		static void Main()
 		{
 			bool endProgram = false;
+			char[] delimiters = new char[] { ' ', ';', ':' };
 
 			while(!endProgram)
 			{
@@ -20,11 +23,14 @@ namespace LexiconCalculator
 				Console.WriteLine("  4. Division");
 				Console.WriteLine("  5. Power");
 				Console.WriteLine();
-				Console.WriteLine("  0. End program");
+				Console.WriteLine(" 11. Addition with numberlist");
+				Console.WriteLine(" 12. Subtraction with numberlist");
 				Console.WriteLine();
 				Console.ForegroundColor = ConsoleColor.DarkGray;
 				Console.WriteLine(" 99. Advanced calculator (Bonus)");
 				Console.ResetColor();
+				Console.WriteLine();
+				Console.WriteLine("  0. End program");
 				Console.WriteLine();
 
 				Console.Write("Enter selection: ");
@@ -61,6 +67,14 @@ namespace LexiconCalculator
 						Power();
 						break;
 
+					case 11:
+						ListAddAndSubstract(delimiters, Operator.Plus, "Addition, list of numbers");
+						break;
+
+					case 12:
+						ListAddAndSubstract(delimiters, Operator.Minus, "Subtraction, list of numbers");
+						break;
+
 					case 99:
 						AdvancedCalc();
 						break;
@@ -80,114 +94,176 @@ namespace LexiconCalculator
 		}
 
 
-		// Helper function the get a double value from the user
-		// If the user enters something that is not a double value,
-		// the function will print an error message and the provided
-		// message to get the user to provide a valid value.
-		private static double ReadDouble(string message)
+		public static void ListAddAndSubstract(char[] delimiters, Operator op, string header)
 		{
-			double answer;
-			Console.Write(message);
+			Console.WriteLine();
+			Console.WriteLine(header);
 
-			while(!double.TryParse(Console.ReadLine(), out answer))
+			Console.Write("Delimiters: ");
+			foreach(var delimiter in delimiters)
 			{
-				Console.WriteLine("Error: Not a number!");
-				Console.WriteLine();
-				Console.Write(message);
+				Console.Write($"'{delimiter}' ");
 			}
-			return answer;
+			Console.WriteLine();
+
+			Console.WriteLine();
+
+			Console.Write("Enter a list of numbers: ");
+
+
+			if(TryParseStringListOfValues(Console.ReadLine(), delimiters, out double[] values) && values.Length > 0)
+			{
+
+				Console.WriteLine();
+
+				char opChar;
+				double result;
+				if(op == Operator.Plus)
+				{
+					opChar = '+';
+					result = Addition(values);
+				}
+				else if( op == Operator.Minus)
+				{
+					opChar = '-';
+					result = Subtraction(values);
+				}
+				else
+				{
+					throw new ArgumentException("The supplied operator is not valid: " + op.ToString());
+				}
+
+				for(int i = 0; i < values.Length; i++)
+				{
+					if(values[i] >= 0)
+					{
+						Console.Write($"{values[i]}");
+					}
+					else
+					{
+						Console.Write($"({values[i]})");
+					}
+
+					if(i < values.Length - 1)
+					{
+						Console.Write($" {opChar} ");
+					}
+					else
+					{
+						Console.Write($" = {result}");
+					}
+				}
+
+			}
+			else
+			{
+				Console.WriteLine();
+				Console.WriteLine("You entered an empty or malformed list of numbers!");
+			}
+			Console.WriteLine();
 		}
+
+
 
 		// Read two numbers from the user.
 		// Add the two numbers and present the sum to the user.
-		private static void Add()
+		public static void Add()
 		{
-			Console.WriteLine("\nAddition\n");
+			Console.WriteLine();
+			Console.WriteLine("Addition");
+			Console.WriteLine();
 
 			double term1 = ReadDouble("Enter the first term: ");
 			double term2 = ReadDouble("Enter the second term: ");
 
 			Console.WriteLine();
-			double sum = term1 + term2;
+			double sum = Addition(term1, term2);
 			Console.WriteLine($"{term1} + {term2} = {sum}");
 		}
 
 		// Read two numbers from the user.
 		// Substract the second number from the first and present
 		// the difference to the user
-		private static void Substract()
+		public static void Substract()
 		{
-			Console.WriteLine("\nSubtraction\n");
+			Console.WriteLine();
+			Console.WriteLine("Subtraction");
+			Console.WriteLine();
 
 			double minuend = ReadDouble("Enter the minuend: ");
 			double subtrahend = ReadDouble("Enter the subtrahend: ");
 
 			Console.WriteLine();
-			double difference = minuend - subtrahend;
+			double difference = Subtraction(minuend, subtrahend);
 			Console.WriteLine($"{minuend} - {subtrahend} = {difference}");
 		}
 
+
 		// Read two numbers from the user.
 		// Multiply the numbers and present the product to the user
-		private static void Multiply()
+		public static void Multiply()
 		{
-			Console.WriteLine("\nMultiplication\n");
+			Console.WriteLine();
+			Console.WriteLine("Multiplication");
 
 			double multiplier = ReadDouble("Enter the multiplier: ");
 			double multiplicand = ReadDouble("Enter the multiplicand: ");
 
 			Console.WriteLine();
-			double product = multiplier * multiplicand;
+			double product = Multiplication(multiplier, multiplicand);
 			Console.WriteLine($"{multiplier} * {multiplicand} = {product}");
 		}
 
 		// Read two numbers from the user.
 		// Divide one number by another and present the quotient.
-		private static void Divide()
+		public static void Divide()
 		{
-			Console.WriteLine("\nDivision\n");
+			Console.WriteLine();
+			Console.WriteLine("Division");
+			Console.WriteLine();
 
 			double dividend = ReadDouble("Enter the dividend: ");
 			double divisor = ReadDouble("Enter the divisor: ");
 
 			Console.WriteLine();
 			// Catch divide by zero
-			if(divisor == 0.0)
+			try
+			{
+				double quotient = Division(dividend, divisor);
+				Console.WriteLine($"{dividend} / {divisor} = {quotient}");
+			}
+			catch(DivideByZeroException)
 			{
 				Console.WriteLine("Error: You cannot divide by zero!");
-			}
-			else
-			{
-				double quotient = dividend / divisor;
-				Console.WriteLine($"{dividend} / {divisor} = {quotient}");
 			}
 		}
 
 		// Read two numbers from the user.
 		// Then rise the first to the power of the other and
 		// present the power to the user.
-		private static void Power()
+		public static void Power()
 		{
-			Console.WriteLine("\nPower of\n");
+			Console.WriteLine();
+			Console.WriteLine("Power of");
+			Console.WriteLine();
 
 			double baseValue = ReadDouble("Enter the base: ");
 			double exponent = ReadDouble("Enter the power: ");
 
 			Console.WriteLine();
-			double power = Math.Pow(baseValue, exponent);
+			double power = PowerOf(baseValue, exponent);
 			Console.WriteLine($"{baseValue}^{exponent} = {power}");
 		}
 
-
-
 		// I missunderstood the task at first, and this is what I came up with then. :-)
 		// It should be able to handle things like a + b * c - d / e * f correctly
-		private static void AdvancedCalc()
+		public static void AdvancedCalc()
 		{
-
-			Console.WriteLine("\nAdvanced Calculator");
+			Console.WriteLine();
+			Console.WriteLine("Advanced Calculator");
 			Console.WriteLine("Valid operators: + - * / =");
-			Console.WriteLine("\n");
+			Console.WriteLine();
+			Console.WriteLine();
 
 			// expression is used to record the expression entered and presented to the user at the end
 			string expression = "";
@@ -293,9 +369,88 @@ namespace LexiconCalculator
 			}
 		}
 
+
+		/***************** Mathematical operations **************************/
+
+		// Add term1 with term2 and return the sum.
+		public static double Addition(double term1, double term2)
+		{
+			return term1 + term2;
+		}
+
+		public static double Addition(double[] numbers)
+		{
+			if(numbers == null || numbers.Length == 0)
+			{
+				throw new ArgumentException("The array numbers must contain at least one number!");
+			}
+
+			double sum = 0.0;
+			foreach(double term in numbers)
+			{
+				sum = Addition(sum, term);
+			}
+
+			return sum;
+
+		}
+
+		// Substract subtrahend from minuend and return the difference.
+		public static double Subtraction(double minuend, double subtrahend)
+		{
+			return minuend - subtrahend;
+		}
+
+		public static double Subtraction(double[] numbers)
+		{
+			if(numbers.Length == 0)
+			{
+				throw new ArgumentException("The array numbers must contain at least one number!");
+			}
+
+			double difference = numbers[0];
+
+			for(int i = 1; i < numbers.Length; i++)
+			{
+				difference = Subtraction(difference, numbers[i]);
+			}
+
+			return difference;
+
+		}
+
+		// Multiply the multiplier with the multiplicand and return the prodoct.
+		public static double Multiplication(double multiplier, double multiplicand)
+		{
+			return multiplier * multiplicand;
+		}
+
+		// Divide the dividend with the divisor and return the quotient.
+		// If divisor is zero, a DivideByZeroException is thrown.
+		public static double Division(double dividend, double divisor)
+		{
+			if(divisor == 0.0)
+			{
+				throw new DivideByZeroException("Division by Zero is not allowed!");
+			}
+
+			return dividend / divisor;
+
+		}
+
+		// Raise baseValue to the power of the exponent and return the
+		// power to the user.
+		public static double PowerOf (double baseValue, double exponent)
+		{
+			return Math.Pow(baseValue, exponent);
+		}
+
+		/******************************************************************/
+
+
 		// Get a valid operator from the user.
 		// The method keeps trying until a valid operator is entered.
-		private static Operator ReadOperator(string message)
+		public static Operator ReadOperator(string message)
 		{
 			Console.Write(message);
 
@@ -310,13 +465,51 @@ namespace LexiconCalculator
 			return op;
 		}
 
+		// Helper function the get a double value from the user
+		// If the user enters something that is not a double value,
+		// the function will print an error message and the provided
+		// message to get the user to provide a valid value.
+		public static double ReadDouble(string message)
+		{
+			double answer;
+			Console.Write(message);
+
+			while(!double.TryParse(Console.ReadLine(), out answer))
+			{
+				Console.WriteLine("Error: Not a number!");
+				Console.WriteLine();
+				Console.Write(message);
+			}
+			return answer;
+		}
+
+
+		public static bool TryParseStringListOfValues(string stringOfValues, char[] delimiters, out double[] values)
+		{
+
+			string[] valueStrings = stringOfValues.Split(delimiters);
+
+			values = new double[valueStrings.Length];
+
+			for(int i = 0; i < valueStrings.Length; i++)
+			{
+				if(!double.TryParse(valueStrings[i], out values[i]))
+				{
+					values = Array.Empty<double>();
+					return false;
+				}
+			}
+
+			return true;
+
+		}
 
 		// Get a operator from a string.
 		// If the string contains a operator, and only a operator,
 		// the function will return true and the found operator is in op.
 		// If that fails the function will return false, and op is set to
 		// Operator.None.
-		private static bool TryParseOperator(string opString, out Operator op)
+		public static bool TryParseOperator(string opString, out Operator op)
 		{
 			bool returnValue;
 			if(opString == null)
@@ -360,6 +553,16 @@ namespace LexiconCalculator
 						returnValue = true;
 						break;
 
+					case "^":
+						op = Operator.PowerTo;
+						returnValue = true;
+						break;
+
+					case "**":
+						op = Operator.PowerTo;
+						returnValue = true;
+						break;
+
 					default:
 						op = Operator.None;
 						returnValue = false;
@@ -371,14 +574,15 @@ namespace LexiconCalculator
 		}
 
 		// Availible operators
-		private enum Operator
+		public enum Operator
 		{
 			None,
 			Equals,
 			Plus,
 			Minus,
 			Multiply,
-			Divide
+			Divide,
+			PowerTo
 		}
 	}
 }
