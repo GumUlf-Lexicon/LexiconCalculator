@@ -9,37 +9,46 @@ namespace LexiconCalculator
 
 		static void Main()
 		{
+			// Only end program when the user requests it
 			bool endProgram = false;
+
+			// Delimiters used when reading in a list of numbers from the user
 			char[] delimiters = new char[] { ' ', ';', ':' };
 
 			while(!endProgram)
 			{
-				Console.Clear();
-				Console.WriteLine("       Menu");
-				Console.WriteLine();
-				Console.WriteLine("  1. Addition");
-				Console.WriteLine("  2. Subtraction");
-				Console.WriteLine("  3. Multiplication");
-				Console.WriteLine("  4. Division");
-				Console.WriteLine("  5. Power");
-				Console.WriteLine();
-				Console.WriteLine(" 11. Addition with numberlist");
-				Console.WriteLine(" 12. Subtraction with numberlist");
-				Console.WriteLine();
-				Console.ForegroundColor = ConsoleColor.DarkGray;
-				Console.WriteLine(" 99. Advanced calculator (Bonus)");
-				Console.ResetColor();
-				Console.WriteLine();
-				Console.WriteLine("  0. End program");
-				Console.WriteLine();
 
-				Console.Write("Enter selection: ");
+				// Menu block, just to be able to collapse it
+				{
+					Console.ResetColor();
+					Console.Clear();
+					Console.WriteLine("       Menu");
+					Console.WriteLine();
+					Console.WriteLine("  1. Addition");
+					Console.WriteLine("  2. Subtraction");
+					Console.WriteLine("  3. Multiplication");
+					Console.WriteLine("  4. Division");
+					Console.WriteLine("  5. Power");
+					Console.WriteLine();
+					Console.WriteLine(" 11. Addition with numberlist");
+					Console.WriteLine(" 12. Subtraction with numberlist");
+					Console.WriteLine();
+					Console.ForegroundColor = ConsoleColor.DarkGray;
+					Console.WriteLine(" 99. Advanced calculator (Bonus)");
+					Console.ResetColor();
+					Console.WriteLine();
+					Console.WriteLine("  0. End program");
+					Console.WriteLine();
+
+					Console.Write("Enter selection: ");
+				}
 				int selection;
 				while(!int.TryParse(Console.ReadLine() ?? "", out selection))
 				{
 					Console.Write("Enter selection: ");
 				}
 
+				// Start the selected operation
 				Console.Clear();
 				switch(selection)
 				{
@@ -68,11 +77,11 @@ namespace LexiconCalculator
 						break;
 
 					case 11:
-						ListAddAndSubstract(delimiters, Operator.Plus, "Addition, list of numbers");
+						ListAddAndSubstract(Operator.Plus, delimiters);
 						break;
 
 					case 12:
-						ListAddAndSubstract(delimiters, Operator.Minus, "Subtraction, list of numbers");
+						ListAddAndSubstract(Operator.Minus, delimiters);
 						break;
 
 					case 99:
@@ -83,86 +92,22 @@ namespace LexiconCalculator
 						Console.WriteLine("Selection does not exist!");
 						break;
 				}
+
 				if(!endProgram)
 				{
+					// Wait for the user to be done before
+					// going back to the menu
+
 					Console.WriteLine();
 					Console.Write("Press any key to continue!");
 					_ = Console.ReadKey(true);
 				}
 			}
+
+			// Clean up the console before the program ends
+			Console.ResetColor();
 			Console.Clear();
 		}
-
-
-		public static void ListAddAndSubstract(char[] delimiters, Operator op, string header)
-		{
-			Console.WriteLine();
-			Console.WriteLine(header);
-
-			Console.Write("Delimiters: ");
-			foreach(var delimiter in delimiters)
-			{
-				Console.Write($"'{delimiter}' ");
-			}
-			Console.WriteLine();
-
-			Console.WriteLine();
-
-			Console.Write("Enter a list of numbers: ");
-
-
-			if(TryParseStringListOfValues(Console.ReadLine(), delimiters, out double[] values) && values.Length > 0)
-			{
-
-				Console.WriteLine();
-
-				char opChar;
-				double result;
-				if(op == Operator.Plus)
-				{
-					opChar = '+';
-					result = Addition(values);
-				}
-				else if( op == Operator.Minus)
-				{
-					opChar = '-';
-					result = Subtraction(values);
-				}
-				else
-				{
-					throw new ArgumentException("The supplied operator is not valid: " + op.ToString());
-				}
-
-				for(int i = 0; i < values.Length; i++)
-				{
-					if(values[i] >= 0)
-					{
-						Console.Write($"{values[i]}");
-					}
-					else
-					{
-						Console.Write($"({values[i]})");
-					}
-
-					if(i < values.Length - 1)
-					{
-						Console.Write($" {opChar} ");
-					}
-					else
-					{
-						Console.Write($" = {result}");
-					}
-				}
-
-			}
-			else
-			{
-				Console.WriteLine();
-				Console.WriteLine("You entered an empty or malformed list of numbers!");
-			}
-			Console.WriteLine();
-		}
-
 
 
 		// Read two numbers from the user.
@@ -198,6 +143,103 @@ namespace LexiconCalculator
 			Console.WriteLine($"{minuend} - {subtrahend} = {difference}");
 		}
 
+		// Read a list of numbers, separated from eachother with the
+		// delimiters, from the user. Then try to perform the
+		// operation (addition or subtraction) indicated by op.
+		// The header is printed as a heder of the subpage.
+		// An ArgumentException is thrown if the op is not
+		// Operator.Plus or Operator.Minus.
+		public static void ListAddAndSubstract(Operator op, char[] delimiters)
+		{
+
+			// Some initialization of values that depend on the operator. 
+			// If a non-supported operator used passed, and exeption is thrown.
+			char opChar;
+			double result;
+			string header;
+			if(op == Operator.Plus)
+			{
+				opChar = '+';
+				header = "Addition, list of numbers";
+			}
+			else if(op == Operator.Minus)
+			{
+				opChar = '-';
+				header = "Subtraction, list of numbers";
+			}
+			else
+			{
+				throw new ArgumentException("The supplied operator is not valid: " + op.ToString());
+			}
+
+			// Print out info to the user about the function
+			Console.WriteLine();
+			Console.WriteLine(header);
+
+			Console.Write("Delimiters: ");
+			foreach(var delimiter in delimiters)
+			{
+				Console.Write($"'{delimiter}' ");
+			}
+
+			Console.WriteLine();
+			Console.WriteLine();
+
+
+			// Get get a list of numbers from the user
+			// and try to parse them and operate on them
+			Console.Write("Enter a list of numbers: ");
+
+			if(TryParseStringListOfValues(Console.ReadLine(), delimiters, out double[] values) && values.Length > 0)
+			{
+				// Yay, we have a list of numbers, with at least on number in it
+
+				// Perform the appropirate operations on the numbers
+				if(op == Operator.Plus)
+				{
+					result = Addition(values);
+				}
+				else if(op == Operator.Minus)
+				{
+					result = Subtraction(values);
+				}
+				else
+				{
+					throw new ArgumentException("The supplied operator is not valid: " + op.ToString());
+				}
+
+
+				// Write out the equation and the result
+				Console.WriteLine();
+				for(int i = 0; i < values.Length; i++)
+				{
+					if(values[i] >= 0)
+					{
+						Console.Write($"{values[i]}");
+					}
+					else
+					{
+						Console.Write($"({values[i]})");
+					}
+
+					if(i < values.Length - 1)
+					{
+						Console.Write($" {opChar} ");
+					}
+					else
+					{
+						Console.Write($" = {result}");
+					}
+				}
+			}
+			else
+			{
+				// Better enter the list of numbers correctly next time
+				Console.WriteLine();
+				Console.WriteLine("You entered an empty or malformed list of numbers!");
+			}
+			Console.WriteLine();
+		}
 
 		// Read two numbers from the user.
 		// Multiply the numbers and present the product to the user
@@ -226,15 +268,23 @@ namespace LexiconCalculator
 			double divisor = ReadDouble("Enter the divisor: ");
 
 			Console.WriteLine();
-			// Catch divide by zero
-			try
+
+			double quotient = Division(dividend, divisor);
+			if(double.IsNegativeInfinity(quotient))
 			{
-				double quotient = Division(dividend, divisor);
-				Console.WriteLine($"{dividend} / {divisor} = {quotient}");
+				Console.WriteLine($"{dividend} / {divisor} = -Inf");
 			}
-			catch(DivideByZeroException)
+			else if(double.IsPositiveInfinity(quotient))
 			{
-				Console.WriteLine("Error: You cannot divide by zero!");
+				Console.WriteLine($"{dividend} / {divisor} = +Inf");
+			}
+			else if(double.IsNaN(quotient))
+			{
+				Console.WriteLine($"{dividend} / {divisor} = NaN");
+			}
+			else
+			{
+				Console.WriteLine($"{dividend} / {divisor} = {quotient}");
 			}
 		}
 
@@ -378,6 +428,8 @@ namespace LexiconCalculator
 			return term1 + term2;
 		}
 
+		// Add the numbers in the array and return the sum.
+		// An exceotion is thrown if the array is null or empty.
 		public static double Addition(double[] numbers)
 		{
 			if(numbers == null || numbers.Length == 0)
@@ -401,6 +453,9 @@ namespace LexiconCalculator
 			return minuend - subtrahend;
 		}
 
+		// Substact the subsequent numbers from the first and
+		// return the difference.
+		// An exceotion is thrown if the array is null or empty
 		public static double Subtraction(double[] numbers)
 		{
 			if(numbers.Length == 0)
@@ -426,12 +481,21 @@ namespace LexiconCalculator
 		}
 
 		// Divide the dividend with the divisor and return the quotient.
-		// If divisor is zero, a DivideByZeroException is thrown.
+		// If divisor is zero either NaN, positiv or negative Infinity is
+		// returned depending on the dividend.
 		public static double Division(double dividend, double divisor)
 		{
-			if(divisor == 0.0)
+			if(divisor == 0.0 && dividend == 0.0)
 			{
-				throw new DivideByZeroException("Division by Zero is not allowed!");
+				return double.NaN;
+			}
+			else if(divisor == 0.0 && dividend < 0.0)
+			{
+				return double.NegativeInfinity;
+			}
+			else if(divisor == 0.0)
+			{
+				return double.PositiveInfinity;
 			}
 
 			return dividend / divisor;
@@ -440,7 +504,7 @@ namespace LexiconCalculator
 
 		// Raise baseValue to the power of the exponent and return the
 		// power to the user.
-		public static double PowerOf (double baseValue, double exponent)
+		public static double PowerOf(double baseValue, double exponent)
 		{
 			return Math.Pow(baseValue, exponent);
 		}
@@ -484,11 +548,28 @@ namespace LexiconCalculator
 		}
 
 
+		// Tries to parse a string containing a list of doubles.
+		// If the attempt succeds true is returned and the array
+		// values are populated with the values found in the string.
+		// 
 		public static bool TryParseStringListOfValues(string stringOfValues, char[] delimiters, out double[] values)
 		{
+			// Because I instictly uses '.' as a decimal separtor
+			// when the program text is in english, but the local
+			// uses ','. I'm debating wether to change the locality
+			// completely withing the program or not. For now not.
+			if(NumberFormatInfo.CurrentInfo.NumberDecimalSeparator == ",")
+			{
+				stringOfValues = stringOfValues.Replace('.', ',');
+			}
 
-			string[] valueStrings = stringOfValues.Split(delimiters);
+			// Separate out the different values between the
+			// delimiters, and don't care about empty entries.
+			string[] valueStrings = stringOfValues.Split(delimiters, StringSplitOptions.RemoveEmptyEntries);
 
+			// Now try and create an array of doubles from
+			// the string with values. If it fails, empty
+			// the values array and return false.
 			values = new double[valueStrings.Length];
 
 			for(int i = 0; i < valueStrings.Length; i++)
@@ -500,6 +581,7 @@ namespace LexiconCalculator
 				}
 			}
 
+			// The parsing of values succeeded!
 			return true;
 
 		}
