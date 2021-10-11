@@ -47,7 +47,7 @@ namespace LexiconCalculator.Tests
 
 			double returendSum = Calculator.Addition(numbers);
 
-			Assert.Equal(5.1, returendSum, 10);
+			Assert.Equal(expectedSum, returendSum, 10);
 		}
 
 		[Fact]
